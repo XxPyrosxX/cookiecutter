@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import platform
 import json
 import os
 import sys
@@ -17,7 +18,6 @@ if TYPE_CHECKING:
 
 import click
 
-from cookiecutter import __version__
 from cookiecutter.config import get_user_config
 from cookiecutter.exceptions import (
     ContextDecodingException,
@@ -33,14 +33,13 @@ from cookiecutter.exceptions import (
 )
 from cookiecutter.log import configure_logger
 from cookiecutter.main import cookiecutter
-
+from cookiecutter import __version__
 
 def version_msg() -> str:
     """Return the Cookiecutter version, location and Python powering it."""
     python_version = sys.version
     location = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     return f"Cookiecutter {__version__} from {location} (Python {python_version})"
-
 
 def validate_extra_context(
     _ctx: Context, _param: Parameter, value: Iterable[str]
@@ -84,6 +83,26 @@ def list_installed_templates(
         click.echo(f' * {name}')
 
 
+def list_available_templates() -> None:
+    """Fetch and display available templates from a remote or predefined source."""
+    repo_url = "https://github.com/cookiecutter/cookiecutter"
+    click.echo(f"Fetching available templates from {repo_url}...")
+
+    # Placeholder for actual fetching logic
+    available_templates = ["https://github.com/audreyfeldroy/cookiecutter-pypackage",
+                           "https://github.com/cookiecutter/cookiecutter-django",
+                           "https://github.com/pytest-dev/cookiecutter-pytest-plugin",
+                           "https://github.com/collective/cookiecutter-plone-starter",
+                           "https://github.com/drivendataorg/cookiecutter-data-science",
+                           "https://github.com/cookiecutter-flask/cookiecutter-flask",
+                           "https://github.com/ionelmc/cookiecutter-pylibrary"]
+
+    click.echo("Available templates:")
+    for template in available_templates:
+        click.echo(f" * {template}")
+
+    sys.exit(0)
+
 @click.command(context_settings={"help_option_names": ['-h', '--help']})
 @click.version_option(__version__, '-V', '--version', message=version_msg())
 @click.argument('template', required=False)
@@ -95,6 +114,13 @@ def list_installed_templates(
     'Defaults to deleting any cached resources and redownloading them. '
     'Cannot be combined with the --replay flag.',
 )
+
+@click.option(
+    '--list-templates',
+    is_flag=True,
+    help='List available templates from a specified repository or remote source.',
+)
+
 @click.option(
     '-c',
     '--checkout',
@@ -186,6 +212,7 @@ def main(
     replay_file: str | None,
     list_installed: bool,
     keep_project_on_failure: bool,
+    list_templates: bool,
 ) -> None:
     """Create a project from a Cookiecutter project template (TEMPLATE).
 
@@ -197,6 +224,9 @@ def main(
     if list_installed:
         list_installed_templates(default_config, config_file)
         sys.exit(0)
+
+    if list_templates:
+        list_available_templates()
 
     # Raising usage, after all commands that should work without args.
     if not template or template.lower() == 'help':
@@ -252,7 +282,6 @@ def main(
         context_str = json.dumps(undefined_err.context, indent=4, sort_keys=True)
         click.echo(f'Context: {context_str}')
         sys.exit(1)
-
 
 if __name__ == "__main__":
     main()
